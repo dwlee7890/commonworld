@@ -21,10 +21,12 @@ import {
   Users,
   Radio,
   Award,
-  Zap,
   CheckCircle2,
   Link as LinkIcon,
-  RefreshCw
+  RefreshCw,
+  Lock,
+  Trash2,
+  ShieldAlert
 } from 'lucide-react';
 
 // --- 1. 국가별 메타데이터 & 접속자 통계 (x7 부스트) ---
@@ -81,7 +83,7 @@ const LIVE_TICKER_ITEMS = {
   ]
 };
 
-// --- 2. 12시간 주기 시스템 자동 갱신형 해외 핫토픽 풀 (Mock 12h Auto-Refresher) ---
+// --- 2. 관리자(Admin) 전용 12시간 자동 갱신 핫토픽 풀 ---
 const AUTO_REFRESHED_HOT_PICKS = [
   {
     url: 'https://www.reddit.com/r/korea/comments/seoul_subway_cleanliness',
@@ -296,7 +298,7 @@ export default function CommonworldApp() {
   const [sortBy, setSortBy] = useState('popular');
   const [posts, setPosts] = useState(INITIAL_POSTS);
 
-  // 동접자 현황판 상태 (x7 부스트 + 미세 변동)
+  // 접속자 현황판 상태 (x7 부스트)
   const [liveStats, setLiveStats] = useState(() => {
     const initial = {};
     Object.keys(COUNTRY_META).forEach((code) => {
@@ -318,12 +320,12 @@ export default function CommonworldApp() {
   const [stamps, setStamps] = useState(['KR', 'DE']);
   const [stampAlert, setStampAlert] = useState(null);
 
-  // 카드 확장 및 인터랙션 상태
+  // 카드 확장 및 댓글 입력 상태
   const [expandedPostIds, setExpandedPostIds] = useState({ 'post-101': true });
   const [showOriginalIds, setShowOriginalIds] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
 
-  // --- 새 글 모달 상태 (원클릭 링크 자동 완성 기능 탑재) ---
+  // 새 글 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState('');
   const [newPostTitle, setNewPostTitle] = useState('');
@@ -331,6 +333,12 @@ export default function CommonworldApp() {
   const [newPostSource, setNewPostSource] = useState('Reddit · r/europe');
   const [newPostCountry, setNewPostCountry] = useState('DE');
   const [newPostCategory, setNewPostCategory] = useState('korea_trending_abroad');
+
+  // --- Admin 관리자 모드 상태 ---
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [adminNotice, setAdminNotice] = useState(null);
 
   const t = UI_TEXT[lang];
 
@@ -386,12 +394,11 @@ export default function CommonworldApp() {
     if (!stamps.includes('US')) unlockStamp('US');
   };
 
-  // --- 원클릭 링크 자동 분석 핸들러 (유저는 링크만 넣으면 알아서 완성) ---
+  // URL 자동 분석 핸들러
   const handleAutoAnalyzeUrl = (targetUrl) => {
     const urlToUse = targetUrl || inputUrl;
     if (!urlToUse.trim()) return;
 
-    // 12시간 자동 갱신 픽 목록 중에서 일치하는 게 있는지 확인
     const matchedPick = AUTO_REFRESHED_HOT_PICKS.find((p) => p.url === urlToUse);
 
     if (matchedPick) {
@@ -405,7 +412,6 @@ export default function CommonworldApp() {
       setNewPostCountry(matchedPick.country);
       setNewPostCategory(matchedPick.category);
     } else {
-      // 일반 임의 링크 입력 시 가상의 스마트 스크래핑 결과 생성
       setNewPostTitle(
         lang === 'ko'
           ? '🔗 [자동 파싱됨] 해외 소셜 미디어나 뉴스에서 수집된 실시간 화제 토픽'
@@ -482,6 +488,48 @@ export default function CommonworldApp() {
     setIsModalOpen(false);
   };
 
+  // --- Admin 관리자 기능 핸들러 ---
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if (adminPasswordInput === 'admin0129') {
+      setIsAdminLoggedIn(true);
+      setIsAdminModalOpen(false);
+      setAdminPasswordInput('');
+      setAdminNotice('관리자(Admin) 권한으로 로그인되었습니다. 글 및 댓글 삭제가 가능합니다.');
+      setTimeout(() => setAdminNotice(null), 4000);
+    } else {
+      alert('비밀번호가 올바르지 않습니다. (admin0129)');
+    }
+  };
+
+  // 12시간 핫토픽 수동 리프레시 기능
+  const handleAdminRefreshHotPicks = () => {
+    setAdminNotice('🔄 해외 주요 소스(Reddit 등)에서 12시간 최신 핫토픽을 성공적으로 새로고침(Refresh) 했습니다!');
+    setTimeout(() => setAdminNotice(null), 4000);
+  };
+
+  // 게시글 삭제 기능
+  const handleDeletePost = (postId) => {
+    if (!isAdminLoggedIn) return;
+    if (confirm('정말 이 글로벌 게시글을 삭제하시겠습니까?')) {
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    }
+  };
+
+  // 댓글 삭제 기능
+  const handleDeleteComment = (postId, commentId) => {
+    if (!isAdminLoggedIn) return;
+    if (confirm('이 다국어 댓글을 삭제하시겠습니까?')) {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, comments: p.comments.filter((c) => c.id !== commentId) }
+            : p
+        )
+      );
+    }
+  };
+
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
       if (selectedCountry !== 'ALL') {
@@ -504,6 +552,14 @@ export default function CommonworldApp() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      {/* 관리자 공지 알림 토스트 */}
+      {adminNotice && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-2xl border border-sky-500/50 bg-slate-900/95 px-4 py-3 text-xs font-bold text-sky-300 shadow-2xl">
+          <ShieldAlert className="h-4 w-4 text-sky-400 shrink-0" />
+          <span>{adminNotice}</span>
+        </div>
+      )}
+
       {stampAlert && (
         <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-amber-400/50 bg-slate-900/95 px-4 py-3 text-xs font-bold text-amber-300 shadow-2xl animate-bounce">
           <Award className="h-5 w-5 text-amber-400 shrink-0" />
@@ -527,7 +583,7 @@ export default function CommonworldApp() {
         </div>
       </div>
 
-      {/* 2. 모바일 상단 동접자 현황판 & 글로벌 여권 스탬프 바 */}
+      {/* 2. 모바일 상단 동접자 현황판 & 여권 바 */}
       <section className="border-b border-slate-800/80 bg-slate-900/50 px-4 py-3">
         <div className="max-w-5xl mx-auto space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -603,12 +659,27 @@ export default function CommonworldApp() {
                 <span className="rounded-full bg-sky-500/15 border border-sky-500/30 px-2 py-0.5 text-[10px] font-bold text-sky-400">
                   GLOBAL LIVE
                 </span>
+                {isAdminLoggedIn && (
+                  <span className="rounded-full bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 text-[10px] font-extrabold text-rose-400">
+                    ADMIN MODE
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400">{t.sloganPrimary}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {isAdminLoggedIn && (
+              <button
+                onClick={handleAdminRefreshHotPicks}
+                className="flex items-center gap-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-500/30"
+              >
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                <span>핫토픽 즉시 리프레시</span>
+              </button>
+            )}
+
             <button
               onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')}
               className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 hover:text-sky-400"
@@ -747,7 +818,7 @@ export default function CommonworldApp() {
           </div>
         </section>
 
-        {/* 카테고리 및 국경 돌파 필터 칩 */}
+        {/* 카테고리 필터 칩 */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
           <Filter className="h-4 w-4 text-slate-500 shrink-0 mr-1" />
           {CATEGORIES.map((cat) => {
@@ -780,10 +851,21 @@ export default function CommonworldApp() {
             return (
               <article
                 key={post.id}
-                className={`rounded-2xl border p-5 md:p-6 space-y-4 shadow-lg ${
+                className={`rounded-2xl border p-5 md:p-6 space-y-4 shadow-lg relative ${
                   post.is_cross_border ? 'border-fuchsia-500/35 bg-slate-900/75' : 'border-slate-800/90 bg-slate-900/60'
                 }`}
               >
+                {/* 관리자 전용 게시글 삭제 버튼 */}
+                {isAdminLoggedIn && (
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    className="absolute top-4 right-4 flex items-center gap-1 rounded-lg bg-rose-500/20 border border-rose-500/40 px-2.5 py-1 text-[11px] font-bold text-rose-300 hover:bg-rose-500/30"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>글 삭제 (Admin)</span>
+                  </button>
+                )}
+
                 {post.is_cross_border && (
                   <div className="flex items-center justify-between rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1.5 text-xs">
                     <div className="flex items-center gap-2 font-bold text-fuchsia-300">
@@ -872,6 +954,27 @@ export default function CommonworldApp() {
                         <p className="text-xs text-slate-300 leading-relaxed">{trans.cultural_context}</p>
                       </div>
                     </div>
+
+                    {/* 댓글 영역 및 관리자 댓글 삭제 */}
+                    <div className="space-y-2 pt-3 border-t border-slate-800">
+                      <h4 className="text-xs font-bold text-white">실시간 댓글</h4>
+                      {post.comments.map((cmt) => (
+                        <div key={cmt.id} className="flex items-center justify-between rounded-xl bg-slate-950 p-3 text-xs">
+                          <div>
+                            <span className="font-bold text-slate-300">{cmt.anonymous_id}: </span>
+                            <span className="text-slate-200">{lang === 'ko' ? cmt.translated_ko : cmt.translated_en}</span>
+                          </div>
+                          {isAdminLoggedIn && (
+                            <button
+                              onClick={() => handleDeleteComment(post.id, cmt.id)}
+                              className="text-rose-400 hover:text-rose-300 text-[11px] font-bold flex items-center gap-1"
+                            >
+                              <Trash2 className="h-3 w-3" /> 삭제
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </article>
@@ -880,17 +983,84 @@ export default function CommonworldApp() {
         </div>
       </main>
 
+      {/* 5. 푸터 (조그마한 Admin 메뉴 포함) */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 text-slate-400">
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
             <span>{t.privacyFooter}</span>
           </div>
-          <span>© 2026 Commonworld</span>
+          <div className="flex items-center gap-4">
+            <span>© 2026 Commonworld</span>
+            {/* 조그마한 Admin 메뉴 버튼 */}
+            {!isAdminLoggedIn ? (
+              <button
+                onClick={() => setIsAdminModalOpen(true)}
+                className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-400 transition"
+              >
+                <Lock className="h-3 w-3" /> Admin
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsAdminLoggedIn(false);
+                  setAdminNotice('관리자 모드가 해제되었습니다.');
+                  setTimeout(() => setAdminNotice(null), 3000);
+                }}
+                className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 font-bold transition"
+              >
+                <Lock className="h-3 w-3" /> 관리자 로그아웃
+              </button>
+            )}
+          </div>
         </div>
       </footer>
 
-      {/* --- 5. 새 글 작성 모달 (1초 링크 큐레이션 및 12시간 자동 갱신 픽 탑재) --- */}
+      {/* Admin 로그인 모달 */}
+      {isAdminModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <Lock className="h-4 w-4 text-sky-400" /> 관리자(Admin) 로그인
+              </h3>
+              <button onClick={() => setIsAdminModalOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <form onSubmit={handleAdminLogin} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-400 mb-1">관리자 비밀번호</label>
+                <input
+                  type="password"
+                  required
+                  value={adminPasswordInput}
+                  onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  placeholder="admin0129"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-slate-100 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAdminModalOpen(false)}
+                  className="rounded-xl border border-slate-700 px-3 py-1.5 text-slate-300"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-sky-500 px-4 py-1.5 font-bold text-slate-950 hover:bg-sky-400"
+                >
+                  로그인
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 새 글 작성 모달 (1초 링크 큐레이션) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
           <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -903,7 +1073,6 @@ export default function CommonworldApp() {
 
             <p className="text-xs text-slate-300 leading-relaxed">{t.modalDesc}</p>
 
-            {/* URL 입력 & 1초 자동 분석 버튼 */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-sky-400">{t.urlInputLabel}</label>
               <div className="flex gap-2">
@@ -927,7 +1096,6 @@ export default function CommonworldApp() {
               </div>
             </div>
 
-            {/* 12시간 자동 갱신 핫토픽 픽 리스트 */}
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
