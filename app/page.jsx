@@ -26,7 +26,8 @@ import {
   RefreshCw,
   Lock,
   Trash2,
-  ShieldAlert
+  ShieldAlert,
+  LayoutTemplate
 } from 'lucide-react';
 
 // --- 1. 국가별 메타데이터 & 접속자 통계 (x7 부스트) ---
@@ -83,35 +84,68 @@ const LIVE_TICKER_ITEMS = {
   ]
 };
 
-// --- 2. 관리자(Admin) 전용 12시간 자동 갱신 핫토픽 풀 ---
-const AUTO_REFRESHED_HOT_PICKS = [
+// --- 2. 관리자 리프레시 시 새로 유입되는 해외 핫토픽 풀 ---
+const FRESH_SCRAPED_HOT_PICKS = [
   {
-    url: 'https://www.reddit.com/r/korea/comments/seoul_subway_cleanliness',
-    title_ko: '왜 서울 지하철은 이렇게 깨끗하고 와이파이가 완벽한가요? (외국인 관광객 폭발적 반응)',
-    title_en: 'Why is the Seoul subway so clean and perfectly connected with Wi-Fi?',
-    source: 'Reddit · r/korea',
-    country: 'US',
+    id: 'scraped-01',
+    type: 'external',
     category: 'korea_trending_abroad',
-    summary: [
-      '뉴욕 및 런던 지하철을 이용하던 외국인 관광객이 서울 지하철의 청결도와 5G 속도에 감탄',
-      '지하철 내부 공공 와이파이 및 스크린도어 시스템에 대한 글로벌 벤치마킹 요구 급증'
+    region_group: 'US',
+    access_country: 'US',
+    is_cross_border: true,
+    cross_border_route: '🇰🇷 Seoul Cafe ➔ 🇺🇸 NY Viral (+410%)',
+    source_name: 'Reddit · r/travel',
+    source_url: 'https://www.reddit.com/r/travel',
+    original_language: 'en',
+    original_title: 'Why Seoul cafes have better interior design and theme concepts than anywhere else in the world',
+    original_body: 'Visited Hongdae and Seongsu last week. Every single cafe is an immersive art exhibition with incredible bakery items. Western coffee shops feel so boring in comparison.',
+    created_at: '방금 전 (자동 크롤링됨)',
+    timestamp: Date.now(),
+    upvotes: 412,
+    keywords: ['성수동카페', '홍대개성', 'K카페', '인테리어'],
+    translations: {
+      ko: {
+        title: '왜 서울의 카페들은 전 세계 어디보다 인테리어와 테마 컨셉이 독보적일까요?',
+        body: '지난주 홍대와 성수동을 방문했습니다. 모든 카페가 놀라운 베이커리와 함께 몰입형 미술 전시회 수준이더군요. 비교해보면 서구권 카페들은 너무 단조롭습니다.',
+        summary: [
+          '미국 여행객이 서울 성수동 및 홍대 카페 거리의 독창적인 공간 디자인에 감탄함',
+          '단순한 커피 판매를 넘어선 복합 문화 공간 형태의 K-카페 인프라가 글로벌 표준으로 부상',
+          '해외 유저들 사이에서 서울 카페 투어가 필수 여행 코스로 자리 잡은 이유를 분석 중'
+        ],
+        why_trending: '시각적 경험을 중시하는 MZ세대의 여행 트렌드와 맞물려 서울의 공간 브랜딩이 주목받음.',
+        cultural_context: '한국 카페들은 단순 음료 소비 공간이 아닌 인증샷과 감성을 공유하는 문화 플랫폼으로 진화했습니다.',
+      },
+      en: {
+        title: 'Why Seoul cafes have better interior design and theme concepts than anywhere else in the world',
+        body: 'Visited Hongdae and Seongsu last week. Every single cafe is an immersive art exhibition with incredible bakery items. Western coffee shops feel so boring in comparison.',
+        summary: [
+          'Traveler praises the immersive art-like interior designs of Seongsu and Hongdae cafes',
+          'K-cafe culture transcends simple coffee, acting as lifestyle exhibition spaces',
+          'Sparks discussion on why Seoul has become a global benchmark for cafe branding'
+        ],
+        why_trending: 'Visual-first experiential travel trends make Seoul’s cafe culture highly shareable globally.',
+        cultural_context: 'Cafes in Korea serve as social hubs and aesthetic destinations rather than quick pit-stops.',
+      }
+    },
+    reactions: { empathy: 182, surprised: 94, funny: 31, controversial: 8, ambiguous: 5, angry: 1 },
+    country_breakdown: [
+      { country: 'US', total: 150, top: [{ type: 'empathy', pct: 70 }, { type: 'surprised', pct: 20 }] },
+      { country: 'KR', total: 110, top: [{ type: 'funny', pct: 50 }, { type: 'empathy', pct: 40 }] }
     ],
-    why_trending: '해외 대도시의 대중교통 노후화와 대비되는 한국 인프라의 편리함이 바이럴됨.',
-    cultural_context: '한국 대중교통 내에서 자유롭게 스마트폰을 사용하는 치안과 IT 환경에 외국인들이 큰 충격을 받습니다.'
-  },
-  {
-    url: 'https://www.reddit.com/r/europe/comments/german_bakery_culture',
-    title_ko: '독일 빵집(Bäckerei)에서 아침마다 브로첸(Brötchen)을 줄 서서 사는 이유',
-    title_en: 'Why Germans queue every morning for fresh Brötchen at the local Bäckerei',
-    source: 'Reddit · r/europe',
-    country: 'DE',
-    category: 'cultural_difference',
-    summary: [
-      '대형 마트 빵 대신 매일 아침 동네 갓 구운 빵을 사 먹는 독일 고유의 아침 식문화 조명',
-      '주말 아침 가족들과 함께 빵집을 찾는 소소한 일상에 전 세계 유저들의 공감 획득'
-    ],
-    why_trending: '프랜차이즈 가공식품에 지친 현대인들에게 로컬 베이커리 문화가 힐링 포인트로 작용.',
-    cultural_context: '독일인들의 일요일 휴식(Ruhezeit)과 신선한 식재료를 중시하는 라이프스타일이 담겨 있습니다.'
+    comments: [
+      {
+        id: 'sc-1',
+        anonymous_id: 'Anon · US-77X',
+        access_country: 'US',
+        original_language: 'en',
+        original_text: 'The themed cafes in Seongsu ruined regular coffee shops for me back home.',
+        translated_ko: '성수동 테마 카페들을 다녀온 뒤로 고향에 있는 일반 카페들은 눈에 들어오지도 않습니다.',
+        translated_en: 'The themed cafes in Seongsu ruined regular coffee shops for me back home.',
+        upvotes: 45,
+        is_best: true,
+        folded: false
+      }
+    ]
   }
 ];
 
@@ -163,6 +197,7 @@ const UI_TEXT = {
     summaryTitle: '⚡ 3줄 핵심 요약',
     whyTrendingTitle: '🔥 왜 지금 화제인가요?',
     culturalContextTitle: '💡 문화적 맥락 & 현지 표현 해설',
+    embedCardTitle: '🔗 원문 출처 임베드 카드 (Embedded Source View)',
     allCommentsTitle: '💬 실시간 다국어 댓글',
     commentPlaceholder: '내 언어로 댓글을 남겨보세요. 전 세계 유저에게 자동 번역됩니다...',
     submitBtn: '등록',
@@ -172,7 +207,6 @@ const UI_TEXT = {
     urlInputLabel: '해외 게시글 또는 뉴스 URL 붙여넣기',
     urlInputPlaceholder: 'https://www.reddit.com/r/...',
     autoAnalyzeBtn: '⚡ 1초 원문 분석 및 자동 완성',
-    autoRefresherHeader: '🔥 [12시간 자동 갱신] 시스템이 수집한 오늘의 해외 화제글 픽 (클릭 시 즉시 채워짐)',
     modalCancel: '취소',
     modalCreate: '토픽 발행하기',
   },
@@ -203,6 +237,7 @@ const UI_TEXT = {
     summaryTitle: '⚡ 3-Line Executive Summary',
     whyTrendingTitle: '🔥 Why is this trending?',
     culturalContextTitle: '💡 Cultural Context & Nuance',
+    embedCardTitle: '🔗 Embedded Source View',
     allCommentsTitle: '💬 Live Cross-Language Comments',
     commentPlaceholder: 'Write in your language. Auto-translated for global readers...',
     submitBtn: 'Post',
@@ -212,7 +247,6 @@ const UI_TEXT = {
     urlInputLabel: 'Paste External Post or News URL',
     urlInputPlaceholder: 'https://www.reddit.com/r/...',
     autoAnalyzeBtn: '⚡ Instant URL Analysis & Auto-Fill',
-    autoRefresherHeader: '🔥 [12h Auto-Refreshed] Today’s Top Pick from Global Feeds (Click to Fill)',
     modalCancel: 'Cancel',
     modalCreate: 'Publish Topic',
   }
@@ -334,7 +368,7 @@ export default function CommonworldApp() {
   const [newPostCountry, setNewPostCountry] = useState('DE');
   const [newPostCategory, setNewPostCategory] = useState('korea_trending_abroad');
 
-  // --- Admin 관리자 모드 상태 ---
+  // Admin 관리자 모드 상태
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
@@ -399,31 +433,17 @@ export default function CommonworldApp() {
     const urlToUse = targetUrl || inputUrl;
     if (!urlToUse.trim()) return;
 
-    const matchedPick = AUTO_REFRESHED_HOT_PICKS.find((p) => p.url === urlToUse);
-
-    if (matchedPick) {
-      setNewPostTitle(lang === 'ko' ? matchedPick.title_ko : matchedPick.title_en);
-      setNewPostBody(
-        lang === 'ko'
-          ? `[자동 수집된 본문 요약]\n- ${matchedPick.summary.join('\n- ')}\n\n💡 왜 화제인가: ${matchedPick.why_trending}`
-          : `[Auto-Parsed Summary]\n- ${matchedPick.summary.join('\n- ')}\n\n💡 Why Trending: ${matchedPick.why_trending}`
-      );
-      setNewPostSource(matchedPick.source);
-      setNewPostCountry(matchedPick.country);
-      setNewPostCategory(matchedPick.category);
-    } else {
-      setNewPostTitle(
-        lang === 'ko'
-          ? '🔗 [자동 파싱됨] 해외 소셜 미디어나 뉴스에서 수집된 실시간 화제 토픽'
-          : '🔗 [Auto-Parsed] Real-time trending topic scraped from global source'
-      );
-      setNewPostBody(
-        lang === 'ko'
-          ? `입력하신 링크(${urlToUse})의 원문 메타데이터와 본문을 시스템이 자동 추출하여 번역 및 요약 완료했습니다.`
-          : `System automatically extracted metadata, translated, and summarized content from (${urlToUse}).`
-      );
-      setNewPostSource('External Community · Web');
-    }
+    setNewPostTitle(
+      lang === 'ko'
+        ? '🔗 [자동 파싱됨] 해외 소셜 미디어나 뉴스에서 수집된 실시간 화제 토픽'
+        : '🔗 [Auto-Parsed] Real-time trending topic scraped from global source'
+    );
+    setNewPostBody(
+      lang === 'ko'
+        ? `입력하신 링크(${urlToUse})의 원문 메타데이터와 본문을 시스템이 자동 추출하여 AI 번역 및 요약 완료했습니다.`
+        : `System automatically extracted metadata, translated, and summarized content from (${urlToUse}).`
+    );
+    setNewPostSource('External Community · Web');
   };
 
   const handleCreatePost = (e) => {
@@ -495,20 +515,20 @@ export default function CommonworldApp() {
       setIsAdminLoggedIn(true);
       setIsAdminModalOpen(false);
       setAdminPasswordInput('');
-      setAdminNotice('관리자(Admin) 권한으로 로그인되었습니다. 글 및 댓글 삭제가 가능합니다.');
+      setAdminNotice('관리자(Admin) 권한으로 로그인되었습니다. 핫토픽 즉시 리프레시 및 글/댓글 삭제가 가능합니다.');
       setTimeout(() => setAdminNotice(null), 4000);
     } else {
       alert('비밀번호가 올바르지 않습니다. (admin0129)');
     }
   };
 
-  // 12시간 핫토픽 수동 리프레시 기능
   const handleAdminRefreshHotPicks = () => {
-    setAdminNotice('🔄 해외 주요 소스(Reddit 등)에서 12시간 최신 핫토픽을 성공적으로 새로고침(Refresh) 했습니다!');
-    setTimeout(() => setAdminNotice(null), 4000);
+    if (!isAdminLoggedIn) return;
+    setPosts((prev) => [FRESH_SCRAPED_HOT_PICKS[0], ...prev]);
+    setAdminNotice('🔄 해외 커뮤니티(Reddit 등) 최신 핫토픽을 성공적으로 크롤링 및 AI 축약하여 피드 상단에 주입했습니다!');
+    setTimeout(() => setAdminNotice(null), 5000);
   };
 
-  // 게시글 삭제 기능
   const handleDeletePost = (postId) => {
     if (!isAdminLoggedIn) return;
     if (confirm('정말 이 글로벌 게시글을 삭제하시겠습니까?')) {
@@ -516,7 +536,6 @@ export default function CommonworldApp() {
     }
   };
 
-  // 댓글 삭제 기능
   const handleDeleteComment = (postId, commentId) => {
     if (!isAdminLoggedIn) return;
     if (confirm('이 다국어 댓글을 삭제하시겠습니까?')) {
@@ -552,7 +571,6 @@ export default function CommonworldApp() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* 관리자 공지 알림 토스트 */}
       {adminNotice && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-2xl border border-sky-500/50 bg-slate-900/95 px-4 py-3 text-xs font-bold text-sky-300 shadow-2xl">
           <ShieldAlert className="h-4 w-4 text-sky-400 shrink-0" />
@@ -570,7 +588,7 @@ export default function CommonworldApp() {
         </div>
       )}
 
-      {/* 1. 상단 티커 */}
+      {/* 상단 티커 */}
       <div className="bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 border-b border-sky-500/20 px-4 py-2 text-xs">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden">
@@ -583,7 +601,7 @@ export default function CommonworldApp() {
         </div>
       </div>
 
-      {/* 2. 모바일 상단 동접자 현황판 & 여권 바 */}
+      {/* 모바일 상단 동접자 현황판 & 여권 바 */}
       <section className="border-b border-slate-800/80 bg-slate-900/50 px-4 py-3">
         <div className="max-w-5xl mx-auto space-y-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -646,7 +664,7 @@ export default function CommonworldApp() {
         </div>
       </section>
 
-      {/* 3. 헤더 */}
+      {/* 헤더 */}
       <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -673,7 +691,7 @@ export default function CommonworldApp() {
             {isAdminLoggedIn && (
               <button
                 onClick={handleAdminRefreshHotPicks}
-                className="flex items-center gap-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-500/30"
+                className="flex items-center gap-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-500/30 shadow-md animate-pulse"
               >
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                 <span>핫토픽 즉시 리프레시</span>
@@ -751,9 +769,9 @@ export default function CommonworldApp() {
         </div>
       </header>
 
-      {/* 4. 메인 본문 */}
+      {/* 메인 본문 */}
       <main className="max-w-5xl mx-auto w-full px-4 py-6 flex-1 space-y-6">
-        {/* 글로벌 온도차 배틀 (VS 투표) */}
+        {/* 글로벌 온도차 배틀 */}
         <section className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/60 p-5 space-y-4 shadow-xl">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -955,7 +973,41 @@ export default function CommonworldApp() {
                       </div>
                     </div>
 
-                    {/* 댓글 영역 및 관리자 댓글 삭제 */}
+                    {/* ★ 원문 출처 임베드(Embed) 카드 스타일 삽입 영역 */}
+                    {post.source_url && (
+                      <div className="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 space-y-3 shadow-inner">
+                        <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800/80 pb-2">
+                          <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                            <LayoutTemplate className="h-4 w-4 text-sky-400" />
+                            {t.embedCardTitle}
+                          </span>
+                          <span className="rounded bg-slate-900 px-2 py-0.5 text-[10px] text-slate-400 border border-slate-800">
+                            {post.source_name}
+                          </span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
+                          <div className="space-y-1">
+                            <h5 className="text-xs font-bold text-white leading-snug">
+                              {post.original_title}
+                            </h5>
+                            <p className="text-[11px] text-slate-400 line-clamp-1">
+                              {post.original_body}
+                            </p>
+                          </div>
+                          <a
+                            href={post.source_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 rounded-xl bg-sky-500 px-3.5 py-2 text-xs font-bold text-slate-950 hover:bg-sky-400 shrink-0 transition"
+                          >
+                            <span>원문 보기</span>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 실시간 댓글 영역 및 관리자 댓글 삭제 */}
                     <div className="space-y-2 pt-3 border-t border-slate-800">
                       <h4 className="text-xs font-bold text-white">실시간 댓글</h4>
                       {post.comments.map((cmt) => (
@@ -983,7 +1035,7 @@ export default function CommonworldApp() {
         </div>
       </main>
 
-      {/* 5. 푸터 (조그마한 Admin 메뉴 포함) */}
+      {/* 푸터 (조그마한 Admin 메뉴 포함) */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 px-4 text-center text-xs text-slate-500">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 text-slate-400">
@@ -992,7 +1044,6 @@ export default function CommonworldApp() {
           </div>
           <div className="flex items-center gap-4">
             <span>© 2026 Commonworld</span>
-            {/* 조그마한 Admin 메뉴 버튼 */}
             {!isAdminLoggedIn ? (
               <button
                 onClick={() => setIsAdminModalOpen(true)}
@@ -1093,33 +1144,6 @@ export default function CommonworldApp() {
                 >
                   {t.autoAnalyzeBtn}
                 </button>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                <span>{t.autoRefresherHeader}</span>
-              </div>
-              <div className="space-y-1.5 pt-1">
-                {AUTO_REFRESHED_HOT_PICKS.map((pick, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setInputUrl(pick.url);
-                      handleAutoAnalyzeUrl(pick.url);
-                    }}
-                    className="w-full text-left rounded-lg border border-slate-800 bg-slate-950 p-2 text-[11px] text-slate-300 hover:border-amber-400 transition flex items-center justify-between gap-2"
-                  >
-                    <span className="truncate font-medium">
-                      {COUNTRY_META[pick.country]?.flag} {lang === 'ko' ? pick.title_ko : pick.title_en}
-                    </span>
-                    <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-300 shrink-0 font-bold">
-                      클릭해 퍼오기
-                    </span>
-                  </button>
-                ))}
               </div>
             </div>
 
