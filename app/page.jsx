@@ -827,4 +827,579 @@ export default function CommonworldApp() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full rounded-xl border border-slate-800 bg
+                className="w-full rounded-xl border border-slate-800 bg-slate-900 pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex rounded-xl border border-slate-800 bg-slate-900 p-0.5">
+              <button
+                onClick={() => setSortBy('popular')}
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                  sortBy === 'popular' ? 'bg-slate-800 text-sky-400' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Flame className="h-3.5 w-3.5" />
+                <span>{t.sortPopular}</span>
+              </button>
+              <button
+                onClick={() => setSortBy('latest')}
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                  sortBy === 'latest' ? 'bg-slate-800 text-sky-400' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>{t.sortLatest}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* 4. 메인 콘텐츠 영역 */}
+      <main className="max-w-5xl mx-auto w-full px-4 py-6 flex-1 space-y-6">
+        {/* 킬러 파츠 1번: 🌡️ 글로벌 온도차 배틀 (VS 폴 & 국가별 민심 지도) */}
+        <section className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/60 p-5 space-y-4 shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="rounded-lg bg-indigo-500/20 border border-indigo-400/40 px-2.5 py-1 text-xs font-extrabold text-indigo-300">
+                {t.battleBadge}
+              </span>
+              <span className="text-xs text-slate-400">{t.battleSub}</span>
+            </div>
+            <span className="text-xs font-bold text-indigo-300">
+              🔥 {battle.totalVotes.toLocaleString()}명 참여 중
+            </span>
+          </div>
+
+          <h2 className="text-base md:text-lg font-extrabold text-white leading-snug">
+            Q. {lang === 'ko' ? battle.question_ko : battle.question_en}
+          </h2>
+
+          {/* VS 투표 버튼 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              onClick={() => handleBattleVote('A')}
+              className={`rounded-xl border p-3.5 text-left transition flex items-center justify-between ${
+                userVote === 'A'
+                  ? 'border-sky-400 bg-sky-500/20 text-white'
+                  : 'border-slate-800 bg-slate-950/80 text-slate-200 hover:border-sky-500/50'
+              }`}
+            >
+              <span className="text-xs md:text-sm font-bold">
+                {lang === 'ko' ? battle.optionA_ko : battle.optionA_en}
+              </span>
+              <span className="text-sm font-extrabold text-sky-400">{battle.overallA}%</span>
+            </button>
+
+            <button
+              onClick={() => handleBattleVote('B')}
+              className={`rounded-xl border p-3.5 text-left transition flex items-center justify-between ${
+                userVote === 'B'
+                  ? 'border-rose-400 bg-rose-500/20 text-white'
+                  : 'border-slate-800 bg-slate-950/80 text-slate-200 hover:border-rose-500/50'
+              }`}
+            >
+              <span className="text-xs md:text-sm font-bold">
+                {lang === 'ko' ? battle.optionB_ko : battle.optionB_en}
+              </span>
+              <span className="text-sm font-extrabold text-rose-400">{battle.overallB}%</span>
+            </button>
+          </div>
+
+          {userVote && (
+            <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>{t.votedNotice}</span>
+            </div>
+          )}
+
+          {/* 국가별 민심 온도차 비교 바 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+            {battle.countries.map((c) => {
+              const meta = COUNTRY_META[c.code];
+              return (
+                <div
+                  key={c.code}
+                  className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-3 space-y-2"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white">
+                      {meta.flag} {lang === 'ko' ? meta.name_ko : meta.name_en}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      👍 {c.pctA}% vs 🛑 {c.pctB}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex">
+                    <div style={{ width: `${c.pctA}%` }} className="bg-sky-400 h-full" />
+                    <div style={{ width: `${c.pctB}%` }} className="bg-rose-500 h-full" />
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-tight">
+                    {lang === 'ko' ? c.note_ko : c.note_en}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 카테고리 및 5번 국경 돌파 레이더 필터 칩 */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          <Filter className="h-4 w-4 text-slate-500 shrink-0 mr-1" />
+          {CATEGORIES.map((cat) => {
+            const active = selectedCategory === cat.slug;
+            return (
+              <button
+                key={cat.slug}
+                onClick={() => setSelectedCategory(cat.slug)}
+                className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold border transition ${
+                  active
+                    ? 'border-sky-400 bg-sky-500/20 text-sky-300 shadow-sm'
+                    : cat.radar
+                    ? 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-300 hover:bg-fuchsia-500/25'
+                    : cat.highlight
+                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                    : 'border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }`}
+              >
+                {lang === 'ko' ? cat.label_ko : cat.label_en}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 게시글 피드 목록 */}
+        <div className="space-y-5">
+          {filteredPosts.map((post) => {
+            const trans = post.translations[lang];
+            const isExpanded = !!expandedPostIds[post.id];
+            const showOriginal = !!showOriginalIds[post.id];
+            const categoryObj = CATEGORIES.find((c) => c.slug === post.category);
+
+            return (
+              <article
+                key={post.id}
+                className={`rounded-2xl border p-5 md:p-6 space-y-4 transition shadow-lg shadow-black/20 ${
+                  post.is_cross_border
+                    ? 'border-fuchsia-500/35 bg-slate-900/75 hover:border-fuchsia-500/60'
+                    : 'border-slate-800/90 bg-slate-900/60 hover:border-slate-700/80'
+                }`}
+              >
+                {/* 5번 기능: 국경 돌파 시그널 레이더 뱃지 */}
+                {post.is_cross_border && (
+                  <div className="flex items-center justify-between rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1.5 text-xs">
+                    <div className="flex items-center gap-2 font-bold text-fuchsia-300">
+                      <Radio className="h-4 w-4 text-fuchsia-400 animate-pulse" />
+                      <span>{t.radarBadge}:</span>
+                      <span className="text-white">{post.cross_border_route}</span>
+                    </div>
+                    <span className="hidden sm:inline text-[11px] text-fuchsia-300/80">
+                      타 대륙 조회수 급상승 감지
+                    </span>
+                  </div>
+                )}
+
+                {/* 카드 상단 메타바 */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-md px-2 py-0.5 font-semibold ${
+                        post.type === 'external'
+                          ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
+                          : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      }`}
+                    >
+                      {post.type === 'external' ? t.externalPostBadge : t.nativePostBadge}
+                    </span>
+
+                    {categoryObj && (
+                      <span className="rounded-md bg-slate-800 px-2.5 py-0.5 text-slate-300 font-medium">
+                        {lang === 'ko' ? categoryObj.label_ko : categoryObj.label_en}
+                      </span>
+                    )}
+
+                    <span className="rounded-md bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 text-sky-400 font-medium flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      {t.autoTranslatedBadge} ({post.original_language.toUpperCase()} → {lang.toUpperCase()})
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <span className="font-medium text-slate-300">
+                      {formatCountryLabel(post.access_country, lang)}
+                    </span>
+                    <span>·</span>
+                    <span>{post.created_at}</span>
+                  </div>
+                </div>
+
+                {/* 제목 및 본문 */}
+                <div className="space-y-2">
+                  <h2 className="text-lg md:text-xl font-bold text-white leading-snug">
+                    {showOriginal ? post.original_title : trans.title}
+                  </h2>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    {showOriginal ? post.original_body : trans.body}
+                  </p>
+                </div>
+
+                {/* 카드 겉면 국가별 반응 미니 프리뷰 바 */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {post.country_breakdown.map((item, idx) => {
+                    const cMeta = COUNTRY_META[item.country] || { flag: '🌐', name_ko: '글로벌', name_en: 'Global' };
+                    const topReaction = item.top[0];
+                    const rMeta = REACTION_META[topReaction?.type];
+                    return (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950/90 px-2.5 py-1 text-[11px] text-slate-300"
+                      >
+                        <span>{cMeta.flag}</span>
+                        <span className="font-semibold">{lang === 'ko' ? cMeta.name_ko : cMeta.name_en}</span>
+                        <span className="text-sky-400 font-bold">
+                          {rMeta?.emoji} {topReaction?.pct}%
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {/* 키워드 태그 & 원문/번역 토글 */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {post.keywords.map((kw, i) => (
+                      <span
+                        key={i}
+                        className="rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-1 text-[11px] text-slate-400"
+                      >
+                        #{kw}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        setShowOriginalIds((prev) => ({ ...prev, [post.id]: !prev[post.id] }))
+                      }
+                      className="rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-1 text-xs font-medium text-slate-300 hover:text-white transition"
+                    >
+                      {showOriginal
+                        ? t.showTranslatedText
+                        : `${t.showOriginalText} (${post.original_language.toUpperCase()})`}
+                    </button>
+
+                    {post.type === 'external' && post.source_url && (
+                      <a
+                        href={post.source_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-1 text-xs font-medium text-sky-400 hover:bg-slate-800 transition"
+                      >
+                        <span>{post.source_name}</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* 감정 반응 투표 바 & Smart Preview 토글 */}
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80 pt-4">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {Object.entries(REACTION_META).map(([key, meta]) => {
+                      const count = post.reactions[key] || 0;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => handleReaction(post.id, key, post.access_country)}
+                          className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-950/90 px-2.5 py-1.5 text-xs hover:border-sky-500/40 hover:bg-slate-900 transition"
+                        >
+                          <span>{meta.emoji}</span>
+                          <span className="text-slate-400">
+                            {lang === 'ko' ? meta.label_ko : meta.label_en}
+                          </span>
+                          <span className="font-bold text-slate-200">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setExpandedPostIds((prev) => ({ ...prev, [post.id]: !prev[post.id] }))
+                    }
+                    className="flex items-center gap-1.5 rounded-xl bg-sky-500/15 border border-sky-500/30 px-3.5 py-2 text-xs font-bold text-sky-300 hover:bg-sky-500/25 transition"
+                  >
+                    <span>{isExpanded ? t.closeSmartPreview : t.openSmartPreview}</span>
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+
+                {/* 확장 영역: Smart Preview + 국가별 상세 분포 + 댓글 */}
+                {isExpanded && (
+                  <div className="mt-4 space-y-5 border-t border-slate-800 pt-5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 space-y-2">
+                        <h4 className="text-xs font-bold text-sky-400">{t.summaryTitle}</h4>
+                        <ul className="space-y-1.5 text-xs text-slate-300 list-disc list-inside leading-relaxed">
+                          {trans.summary.map((line, idx) => (
+                            <li key={idx}>{line}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 space-y-2">
+                        <h4 className="text-xs font-bold text-amber-400">{t.whyTrendingTitle}</h4>
+                        <p className="text-xs text-slate-300 leading-relaxed">{trans.why_trending}</p>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 space-y-2">
+                        <h4 className="text-xs font-bold text-emerald-400">{t.culturalContextTitle}</h4>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {trans.cultural_context}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 실시간 다국어 댓글 영역 */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <MessageSquare className="h-3.5 w-3.5 text-sky-400" />
+                        <span>
+                          {t.allCommentsTitle} ({post.comments.length})
+                        </span>
+                      </h4>
+
+                      <div className="space-y-2.5">
+                        {post.comments.map((cmt) => {
+                          const isFolded = cmt.folded && !unfoldedCommentIds[cmt.id];
+                          return (
+                            <div
+                              key={cmt.id}
+                              className={`rounded-xl border p-3.5 text-xs space-y-1.5 ${
+                                cmt.is_best
+                                  ? 'border-sky-500/30 bg-sky-500/5'
+                                  : 'border-slate-800 bg-slate-950/70'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-slate-400">
+                                <div className="flex items-center gap-2">
+                                  {cmt.is_best && (
+                                    <span className="rounded bg-sky-500 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-950">
+                                      BEST
+                                    </span>
+                                  )}
+                                  <span className="font-semibold text-slate-300">
+                                    {cmt.anonymous_id}
+                                  </span>
+                                  <span>·</span>
+                                  <span>{formatCountryLabel(cmt.access_country, lang)}</span>
+                                </div>
+                                <span className="flex items-center gap-1 text-slate-400">
+                                  <ThumbsUp className="h-3 w-3" /> {cmt.upvotes}
+                                </span>
+                              </div>
+
+                              {isFolded ? (
+                                <div className="flex items-center justify-between text-slate-500 italic pt-1">
+                                  <span>{t.foldedCommentNotice}</span>
+                                  <button
+                                    onClick={() =>
+                                      setUnfoldedCommentIds((prev) => ({ ...prev, [cmt.id]: true }))
+                                    }
+                                    className="text-sky-400 underline not-italic"
+                                  >
+                                    {t.unfoldBtn}
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <p className="text-slate-200 leading-relaxed">
+                                    {lang === 'ko' ? cmt.translated_ko : cmt.translated_en}
+                                  </p>
+                                  <p className="text-[11px] text-slate-500">
+                                    원문 ({cmt.original_language.toUpperCase()}): {cmt.original_text}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2">
+                        <input
+                          type="text"
+                          value={commentInputs[post.id] || ''}
+                          onChange={(e) =>
+                            setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
+                          }
+                          onKeyDown={(e) =>
+                            e.key === 'Enter' && handleAddComment(post.id, post.access_country)
+                          }
+                          placeholder={t.commentPlaceholder}
+                          className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none"
+                        />
+                        <button
+                          onClick={() => handleAddComment(post.id, post.access_country)}
+                          className="flex items-center gap-1 rounded-xl bg-sky-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-sky-400 transition"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                          <span>{t.submitBtn}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </main>
+
+      {/* 푸터 */}
+      <footer className="border-t border-slate-900 bg-slate-950 py-6 px-4 text-center text-xs text-slate-500">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <span>{t.privacyFooter}</span>
+          </div>
+          <span>© 2026 Commonworld · Global Anonymous Community</span>
+        </div>
+      </footer>
+
+      {/* 새 글 작성 모달 */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white">{t.modalTitle}</h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePost} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewPostType('native')}
+                  className={`rounded-xl py-2 font-bold border ${
+                    newPostType === 'native'
+                      ? 'border-sky-500 bg-sky-500/20 text-sky-300'
+                      : 'border-slate-800 bg-slate-950 text-slate-400'
+                  }`}
+                >
+                  {t.modalTypeNative}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewPostType('external')}
+                  className={`rounded-xl py-2 font-bold border ${
+                    newPostType === 'external'
+                      ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                      : 'border-slate-800 bg-slate-950 text-slate-400'
+                  }`}
+                >
+                  {t.modalTypeExternal}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-400 mb-1">카테고리</label>
+                  <select
+                    value={newPostCategory}
+                    onChange={(e) => setNewPostCategory(e.target.value)}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-slate-200"
+                  >
+                    {CATEGORIES.filter((c) => c.slug !== 'all' && c.slug !== 'cross_border').map(
+                      (c) => (
+                        <option key={c.slug} value={c.slug}>
+                          {lang === 'ko' ? c.label_ko : c.label_en}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">접속 국가 표시</label>
+                  <select
+                    value={newPostCountry}
+                    onChange={(e) => setNewPostCountry(e.target.value)}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-slate-200"
+                  >
+                    <option value="DE">🇩🇪 Germany (독일)</option>
+                    <option value="KR">🇰🇷 Korea (한국)</option>
+                    <option value="US">🇺🇸 USA (미국)</option>
+                    <option value="JP">🇯🇵 Japan (일본)</option>
+                    <option value="GB">🇬🇧 UK (영국)</option>
+                    <option value="FR">🇫🇷 France (프랑스)</option>
+                  </select>
+                </div>
+              </div>
+
+              {newPostType === 'external' && (
+                <div>
+                  <label className="block text-slate-400 mb-1">{t.modalSourceInput}</label>
+                  <input
+                    type="text"
+                    value={newPostSource}
+                    onChange={(e) => setNewPostSource(e.target.value)}
+                    placeholder="Reddit · r/europe"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-slate-100"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-slate-400 mb-1">{t.modalTitleInput}</label>
+                <input
+                  type="text"
+                  required
+                  value={newPostTitle}
+                  onChange={(e) => setNewPostTitle(e.target.value)}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-slate-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">{t.modalBodyInput}</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={newPostBody}
+                  onChange={(e) => setNewPostBody(e.target.value)}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-slate-100"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-xl border border-slate-700 px-4 py-2 text-slate-300"
+                >
+                  {t.modalCancel}
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-sky-500 px-5 py-2 font-bold text-slate-950 hover:bg-sky-400"
+                >
+                  {t.modalCreate}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
